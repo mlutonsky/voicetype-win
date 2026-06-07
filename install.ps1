@@ -2,6 +2,10 @@
 # Easiest: double-click install.cmd
 # From a terminal:  powershell -ExecutionPolicy Bypass -File install.ps1
 #   -Cpu     force the CPU build (otherwise the GPU is auto-detected)
+#
+# Note on "-ExecutionPolicy Bypass": it is harmless here. Windows blocks unsigned
+# local .ps1 scripts by default; the flag lifts that ONLY for that single command
+# and changes no system-wide setting. It is just so this script can run at all.
 param([switch]$Cpu)
 
 $ErrorActionPreference = 'Stop'
