@@ -8,8 +8,8 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 
-# Runtime log
-dictate.log
+# Runtime log (incl. rotated dictate.log.1)
+dictate.log*
 *.log
 
 # OS / editor

@@ -27,6 +27,7 @@ from PIL import Image, ImageDraw
 
 import i18n
 import media_control
+import ort_utils
 from cuda_init import init_cuda
 
 # The Windows console is often cp1250 – switch output to UTF-8 so we don't crash on ●/■/→/accents
@@ -38,6 +39,29 @@ for _s in (sys.stdout, sys.stderr):
 
 BASE = Path(__file__).resolve().parent
 LOGFILE = BASE / "dictate.log"
+_MAX_LOG_BYTES = 1_000_000
+
+_log_lock = threading.Lock()
+_log_fh = None
+
+
+def _log_handle():
+    """Open the log file once (rotating a large previous log). Returns a handle or None."""
+    global _log_fh
+    if _log_fh is None:
+        try:
+            if LOGFILE.exists() and LOGFILE.stat().st_size > _MAX_LOG_BYTES:
+                backup = LOGFILE.with_name(LOGFILE.name + ".1")
+                try:
+                    if backup.exists():
+                        backup.unlink()
+                    LOGFILE.rename(backup)
+                except OSError:
+                    pass
+            _log_fh = open(LOGFILE, "a", encoding="utf-8")
+        except Exception:
+            _log_fh = None
+    return _log_fh
 
 
 def log(msg: str) -> None:
@@ -48,12 +72,15 @@ def log(msg: str) -> None:
             print(line, flush=True)
     except Exception:
         pass
-    # Always also to the log file (for background runs without a console)
-    try:
-        with open(LOGFILE, "a", encoding="utf-8") as f:
-            f.write(line + "\n")
-    except Exception:
-        pass
+    # Also to the log file, kept open across calls (for background runs without a console)
+    with _log_lock:
+        fh = _log_handle()
+        if fh is not None:
+            try:
+                fh.write(line + "\n")
+                fh.flush()
+            except Exception:
+                pass
 
 
 def load_config() -> dict:
@@ -134,9 +161,8 @@ class Dictator:
             log(i18n.t("loading_model", model=self.cfg["model"], providers=provs))
             self.model = onnx_asr.load_model(self.cfg["model"], providers=provs)
 
-            # Detect the provider actually used
-            import onnxruntime as ort
-            used = self._session_providers(ort)
+            # Detect the provider actually used (shared helper)
+            used = ort_utils.session_providers(self.model)
             self.on_gpu = any("CUDA" in p for p in used)
             log(i18n.t("running_on", dev="GPU (CUDA)" if self.on_gpu else "CPU", providers=used))
 
@@ -162,24 +188,6 @@ class Dictator:
             gc.collect()
             log(i18n.t("unloaded"))
         self.notify()
-
-    def _session_providers(self, ort) -> list[str]:
-        seen: set[int] = set()
-
-        def walk(obj, depth=0):
-            if id(obj) in seen or depth > 5:
-                return []
-            seen.add(id(obj))
-            out: list[str] = []
-            for v in getattr(obj, "__dict__", {}).values():
-                if isinstance(v, ort.InferenceSession):
-                    out += v.get_providers()
-                else:
-                    out += walk(v, depth + 1)
-            return out
-
-        provs = walk(self.model)
-        return provs or ["<unknown>"]
 
     def transcribe(self, audio: np.ndarray) -> str:
         kwargs: dict = {}
@@ -354,11 +362,13 @@ class Dictator:
 
 
 # ---- system tray icon ----
-TRAY_COLORS = {
-    "recording": (244, 67, 54),   # red – recording
-    "paused": (255, 152, 0),      # orange – paused
-    "unloaded": (130, 130, 130),  # grey – model unloaded
-    "ready": (76, 175, 80),       # green – ready
+# Single source of truth for tray state -> (icon color, i18n status-label key).
+TRAY_STATES = {
+    "recording":    ((244, 67, 54),   "st_recording"),    # red
+    "paused":       ((255, 152, 0),   "st_paused"),       # orange
+    "transcribing": ((76, 175, 80),   "st_transcribing"),  # green (busy, working)
+    "ready":        ((76, 175, 80),   "st_ready"),         # green
+    "unloaded":     ((130, 130, 130), "st_unloaded"),      # grey
 }
 
 
@@ -374,11 +384,13 @@ def make_icon(color: tuple) -> Image.Image:
     return img
 
 
-def state_key(d: "Dictator") -> str:
+def current_state(d: "Dictator") -> str:
     if not d.enabled:
         return "paused"
     if d.recording:
         return "recording"
+    if d.busy:
+        return "transcribing"
     if not d.loaded:
         return "unloaded"
     return "ready"
@@ -388,9 +400,9 @@ class Tray:
     def __init__(self, d: Dictator, cfg: dict):
         self.d = d
         self.cfg = cfg
-        self._icons = {k: make_icon(c) for k, c in TRAY_COLORS.items()}
+        self._icons = {k: make_icon(color) for k, (color, _) in TRAY_STATES.items()}
         self.icon = pystray.Icon(
-            "voicetype", self._icons[state_key(d)],
+            "voicetype", self._icons[current_state(d)],
             "voicetype-win", menu=self._menu(),
         )
         d.on_state = self.refresh
@@ -413,21 +425,12 @@ class Tray:
 
     def _status_text(self, item) -> str:
         d = self.d
-        if d.recording:
-            stk = "st_recording"
-        elif not d.enabled:
-            stk = "st_paused"
-        elif d.busy:
-            stk = "st_transcribing"
-        elif d.loaded:
-            stk = "st_ready"
-        else:
-            stk = "st_unloaded"
+        label = TRAY_STATES[current_state(d)][1]
         dev = "GPU" if d.on_gpu else "CPU"
-        return i18n.t("tray_status", st=i18n.t(stk), dev=dev, hotkey=self.cfg["hotkey"].upper())
+        return i18n.t("tray_status", st=i18n.t(label), dev=dev, hotkey=self.cfg["hotkey"].upper())
 
     def refresh(self) -> None:
-        self.icon.icon = self._icons[state_key(self.d)]
+        self.icon.icon = self._icons[current_state(self.d)]
         try:
             self.icon.update_menu()
         except Exception:

@@ -13,6 +13,7 @@ import numpy as np
 
 import i18n
 from cuda_init import init_cuda
+from ort_utils import session_providers
 
 # The Windows console is often cp1250 – switch output to UTF-8 to be safe
 for _s in (sys.stdout, sys.stderr):
@@ -48,29 +49,8 @@ t0 = time.perf_counter()
 model = onnx_asr.load_model(MODEL, providers=PROVIDERS)
 print(i18n.t("sm_loaded_in", secs=time.perf_counter() - t0))
 
-# Detect which provider the encoder actually runs on
-used = None
-for attr in vars(model).values():
-    sess = getattr(attr, "_session", None) or getattr(attr, "session", None)
-    if isinstance(sess, ort.InferenceSession):
-        used = sess.get_providers()
-        break
-if used is None:
-    def find_sessions(obj, depth=0, seen=None):
-        if seen is None:
-            seen = set()
-        if id(obj) in seen or depth > 4:
-            return []
-        seen.add(id(obj))
-        found = []
-        for v in getattr(obj, "__dict__", {}).values():
-            if isinstance(v, ort.InferenceSession):
-                found.append(v.get_providers())
-            else:
-                found += find_sessions(v, depth + 1, seen)
-        return found
-    provs = find_sessions(model)
-    used = provs[0] if provs else ["<unknown>"]
+# Detect which provider the encoder actually runs on (shared helper)
+used = session_providers(model)
 print(i18n.t("sm_session", providers=used))
 on_gpu = any("CUDA" in p for p in used)
 print(i18n.t("sm_running_on", dev="GPU (CUDA)" if on_gpu else "CPU"))
