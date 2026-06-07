@@ -66,6 +66,7 @@ _STRINGS = {
     "dictation_on": {"en": "Dictation resumed.", "cs": "Diktování obnoveno."},
     "dictation_off": {"en": "Dictation paused.", "cs": "Diktování pozastaveno."},
     "audio_status": {"en": "audio status: {status}", "cs": "audio status: {status}"},
+    "stream_error": {"en": "Audio stream error: {err}", "cs": "Chyba audio streamu: {err}"},
     "quitting": {"en": "Quitting ...", "cs": "Ukončuji aplikaci ..."},
     # --- tray menu ---
     "menu_pause": {"en": "Pause dictation", "cs": "Pozastavit diktování"},

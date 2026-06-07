@@ -194,18 +194,41 @@ class Dictator:
             log(i18n.t("audio_status", status=status))
         self.frames.append(indata[:, 0].copy())
 
+    def _teardown_stream(self) -> None:
+        """Stop and close the input stream. Never raises (errors are logged)."""
+        if self.stream is not None:
+            try:
+                self.stream.stop()
+                self.stream.close()
+            except Exception as e:
+                log(i18n.t("stream_error", err=e))
+            finally:
+                self.stream = None
+
+    def _resume_media(self) -> None:
+        """Resume any media we paused for this recording."""
+        if self._paused_media:
+            media_control.resume(self._paused_media)
+            self._paused_media = []
+
     def start_recording(self) -> None:
-        # Pause playing media (YouTube, Spotify, ...) – resumed after recording ends
+        # Pause playing media (YouTube, Spotify, ...) - resumed after recording ends
         if self.cfg.get("pause_media", True):
             self._paused_media = media_control.pause_playing()
             if self._paused_media:
                 log(i18n.t("media_paused", apps=self._paused_media))
-        self.frames = []
-        self.stream = sd.InputStream(
-            samplerate=self.samplerate, channels=1, dtype="float32",
-            callback=self._audio_cb,
-        )
-        self.stream.start()
+        try:
+            self.frames = []
+            self.stream = sd.InputStream(
+                samplerate=self.samplerate, channels=1, dtype="float32",
+                callback=self._audio_cb,
+            )
+            self.stream.start()
+        except Exception:
+            # Setup failed: don't leave media paused or a half-open stream behind
+            self._teardown_stream()
+            self._resume_media()
+            raise
         self.recording = True
         beep(self.cfg["beep"], 880)
         log(i18n.t("recording"))
@@ -213,15 +236,8 @@ class Dictator:
 
     def stop_recording(self) -> None:
         self.recording = False
-        try:
-            self.stream.stop()
-            self.stream.close()
-        finally:
-            self.stream = None
-        # Resume previously paused players
-        if self._paused_media:
-            media_control.resume(self._paused_media)
-            self._paused_media = []
+        self._teardown_stream()   # never raises
+        self._resume_media()
         beep(self.cfg["beep"], 600)
         audio = np.concatenate(self.frames) if self.frames else np.zeros(0, dtype="float32")
         self.frames = []
@@ -234,6 +250,7 @@ class Dictator:
         if len(audio) < self.samplerate * 0.2:
             log(i18n.t("too_short"))
             self.busy = False
+            self.notify()
             return
         try:
             if not self.loaded:
@@ -307,11 +324,17 @@ class Dictator:
             if self.busy:
                 log(i18n.t("busy"))
                 return
-            if not self.recording:
-                self.start_recording()
-            else:
-                self.busy = True
-                self.stop_recording()
+            try:
+                if not self.recording:
+                    self.start_recording()
+                else:
+                    self.busy = True
+                    self.stop_recording()
+            except Exception as e:
+                # A teardown/setup failure must never wedge the toggle permanently
+                log(i18n.t("stream_error", err=e))
+                self.busy = False
+                self.notify()
 
     def set_enabled(self, value: bool) -> None:
         with self.lock:
@@ -319,16 +342,9 @@ class Dictator:
             if not value and self.recording:
                 # cancel ongoing recording without transcribing
                 self.recording = False
-                try:
-                    if self.stream:
-                        self.stream.stop()
-                        self.stream.close()
-                finally:
-                    self.stream = None
+                self._teardown_stream()
                 self.frames = []
-                if self._paused_media:
-                    media_control.resume(self._paused_media)
-                    self._paused_media = []
+                self._resume_media()
         log(i18n.t("dictation_on") if value else i18n.t("dictation_off"))
         self.notify()
 
