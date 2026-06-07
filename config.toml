@@ -1,0 +1,34 @@
+# Parakeet diktování – konfigurace
+# Po změně je nutné aplikaci restartovat.
+
+# Klávesová zkratka pro toggle (zapnout/vypnout nahrávání).
+# Příklady: "alt+.", "ctrl+alt+space", "win+alt+d"
+hotkey = "alt+."
+
+# Model (ponech, pokud nevíš). Multijazyčný, umí česky.
+model = "nemo-parakeet-tdt-0.6b-v3"
+
+# Výpočetní zařízení: "auto" (GPU, fallback CPU) | "gpu" | "cpu"
+device = "auto"
+
+# Jazyk: "auto" (detekce) nebo kód jako "cs", "en", "de", ...
+language = "auto"
+
+# Interpunkce a velká písmena (doporučeno true pro diktování).
+punctuation = true
+
+# Přidat mezeru za vložený text (oddělí navazující diktování).
+append_space = true
+
+# Zvuková signalizace startu/konce nahrávání.
+beep = true
+
+# Vkládání textu: "clipboard" (přes schránku + Ctrl+V, spolehlivé pro diakritiku)
+#                 "type" (simulované psaní znaků)
+paste_method = "clipboard"
+
+# Po vložení obnovit původní obsah schránky (jen pro paste_method = "clipboard").
+restore_clipboard = true
+
+# Pozastavit hrající média (YouTube, Spotify, ...) po dobu nahrávání a po konci je obnovit.
+pause_media = true

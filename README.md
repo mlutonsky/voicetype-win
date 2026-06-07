@@ -1,0 +1,136 @@
+# voicetype-win
+
+**Local, offline voice dictation for Windows — like Whisper Flow, but it runs entirely on your own machine and GPU.** Press a hotkey, speak, press again, and the transcribed text is typed into whatever app has focus. Nothing is sent to the cloud.
+
+Powered by [onnx-asr](https://github.com/istupakov/onnx-asr) with **switchable models** (NVIDIA Parakeet, Canary, …). The default model is multilingual — 25 European languages including English, German, French, Spanish, Czech, … with automatic language detection.
+
+> 🇨🇿 Česká verze: [README.cs.md](README.cs.md)
+
+## Features
+
+- 🎙️ **Toggle dictation** with a global hotkey (default `Alt + .`)
+- ⚡ Runs **locally on the GPU** (CUDA), automatic CPU fallback
+- 🔀 **Switchable ASR model** via config (Parakeet TDT 0.6B v3 by default; Canary, GigaAM, Whisper also supported)
+- ✍️ Automatic **punctuation & capitalization**
+- 📋 Inserts text via clipboard paste — reliable for accented / Unicode characters
+- 🟢 **System tray icon**: pause, **unload model from VRAM** (free ~3.4 GB for gaming), quit
+- ⏯️ **Auto-pauses media** (YouTube / Spotify / …) while recording and resumes it afterwards
+- 🚀 Optional **autostart** at login
+
+## Requirements
+
+- Windows 10 / 11
+- **NVIDIA GPU** recommended (~4 GB free VRAM for the default model). RTX 50-series (Blackwell / sm_120) supported. CPU-only also works (slower).
+- **Python 3.11**
+- A microphone
+
+You do **not** need to install the CUDA Toolkit — the required CUDA 12 / cuDNN 9 runtime is pulled in via pip (see `requirements.txt`).
+
+## Installation
+
+```powershell
+git clone https://github.com/mlutonsky/voicetype-win.git
+cd voicetype-win
+powershell -ExecutionPolicy Bypass -File install.ps1
+```
+
+- No Python yet? `winget install Python.Python.3.11`
+- **CPU-only** machine: `powershell -ExecutionPolicy Bypass -File install.ps1 -Cpu` (then set `device = "cpu"` in `config.toml`)
+
+The ASR model (~1 GB) downloads automatically from Hugging Face on first run.
+
+Verify GPU + model:
+
+```powershell
+.\.venv\Scripts\python.exe smoke_test.py
+```
+
+## Usage
+
+- **Background (no window):** double-click `start-dictation.vbs`
+- **With a console (see logs):** `.\.venv\Scripts\python.exe dictate.py`
+
+1. Click into any text field.
+2. Press **`Alt + .`** → high beep → **speak** (any playing media auto-pauses).
+3. Press **`Alt + .`** again → low beep → text is inserted at the cursor; media resumes.
+
+### Tray icon
+
+An icon appears in the notification area (it may be under the **^** overflow — drag it onto the taskbar). Colour = state:
+
+| Colour | State |
+|---|---|
+| 🟢 green | ready, model in memory |
+| 🔴 red | recording |
+| 🟠 orange | dictation paused |
+| ⚪ grey | model unloaded (VRAM freed) |
+
+**Right-click** for the menu:
+
+- **Pause / Resume dictation**
+- **Unload model from memory (GPU)** — frees **~3.4 GB VRAM** (great before gaming). The app keeps running; the model reloads automatically (~3 s) on your next dictation.
+- **Load model into memory** — load it back manually.
+- **Quit** — exits fully (also releases the remaining ~80 MB CUDA context).
+
+### Autostart at login
+
+```powershell
+powershell -ExecutionPolicy Bypass -File install-autostart.ps1
+```
+
+Disable by deleting the shortcut in `shell:startup` (Win+R → `shell:startup`).
+
+## Configuration (`config.toml`)
+
+Restart the app after editing.
+
+| Key | Meaning |
+|---|---|
+| `hotkey` | Toggle shortcut, e.g. `"alt+."`, `"ctrl+alt+space"`, `"win+alt+d"` |
+| `model` | ASR model — see *Switching the model* below |
+| `device` | `"auto"` (GPU, CPU fallback) / `"gpu"` / `"cpu"` |
+| `language` | `"auto"` or a code like `"cs"`, `"en"`, `"de"`, … |
+| `punctuation` | `true` = punctuation and capitalization |
+| `append_space` | `true` = append a space after the inserted text |
+| `beep` | start/stop sound feedback |
+| `paste_method` | `"clipboard"` (Ctrl+V, robust for diacritics) / `"type"` |
+| `pause_media` | `true` = pause playing media while recording, resume afterwards |
+
+### Switching the model
+
+Set `model` in `config.toml` to any model supported by onnx-asr, e.g.:
+
+| `model` | Notes |
+|---|---|
+| `nemo-parakeet-tdt-0.6b-v3` | **default** — multilingual (25 EU languages), auto language detection |
+| `nemo-canary-1b-v2` | multilingual + translation, larger/more accurate |
+| `nemo-parakeet-tdt-0.6b-v2` | English-only, very fast |
+| `whisper-base` | OpenAI Whisper (ONNX) |
+
+Set `language` to match (or keep `"auto"`). See the [onnx-asr model list](https://github.com/istupakov/onnx-asr#models) for everything available.
+
+## Troubleshooting
+
+- **Hotkey doesn't respond:** the global keyboard hook may need elevated rights when a foreground app runs as administrator — start `start-dictation.vbs` / the console **as administrator**.
+- **Running on CPU instead of GPU:** check the `smoke_test.py` output / `dictate.log` line `Běží na` (*Running on*). GPU needs the `nvidia-*-cu12` packages from `requirements.txt`.
+- **Wrong microphone:** the default Windows input device is used — change it in *Settings → System → Sound → Input*.
+- **Paste fails in a specific app:** set `paste_method = "type"` in `config.toml`.
+- **Long recordings:** the model is tuned for shorter segments (up to ~30 s); for continuous long dictation, toggle per sentence/paragraph.
+
+> Note: runtime/console messages are in Czech.
+
+## How it works
+
+- `dictate.py` — main app: global hotkey (toggle), microphone capture (`sounddevice`, 16 kHz mono), transcription (`onnx-asr`), clipboard paste, tray icon (`pystray` + `Pillow`), media pause/resume.
+- `cuda_init.py` — exposes the CUDA / cuDNN DLLs from the `nvidia-*-cu12` pip packages (otherwise `onnxruntime` can't find them at runtime).
+- `media_control.py` — pauses/resumes media via Windows System Media Transport Controls (`winsdk`).
+- The model is downloaded from Hugging Face on first run and cached under `~/.cache/huggingface`.
+
+## Credits
+
+- [onnx-asr](https://github.com/istupakov/onnx-asr) by istupakov (runtime + ONNX model conversions)
+- [NVIDIA NeMo](https://github.com/NVIDIA/NeMo) Parakeet / Canary models
+
+## License
+
+[MIT](LICENSE)

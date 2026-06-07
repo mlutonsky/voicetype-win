@@ -1,0 +1,10 @@
+# Varianta bez NVIDIA GPU (CPU-only). Použij místo requirements.txt a v config.toml nastav device = "cpu".
+onnxruntime           # CPU runtime (NE onnxruntime-gpu)
+onnx-asr[hub]
+sounddevice
+keyboard
+pyperclip
+numpy
+pystray
+Pillow
+winsdk

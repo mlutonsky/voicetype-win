@@ -1,0 +1,18 @@
+# Jádro
+onnxruntime-gpu==1.22.0   # NE 1.24.1 (nekompatibilní s onnx-asr)
+onnx-asr[hub]
+sounddevice
+keyboard
+pyperclip
+numpy
+pystray          # ikona v liště
+Pillow           # generování ikony
+winsdk           # pozastavení/obnovení médií (System Media Transport Controls)
+
+# CUDA 12 + cuDNN 9 runtime (onnxruntime-gpu je nebundluje); verze 12.9/cuDNN 9.23 podporují Blackwell (sm_120)
+nvidia-cudnn-cu12
+nvidia-cublas-cu12
+nvidia-cufft-cu12
+nvidia-cuda-runtime-cu12
+nvidia-curand-cu12
+nvidia-cuda-nvrtc-cu12
