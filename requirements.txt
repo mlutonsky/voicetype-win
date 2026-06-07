@@ -1,15 +1,15 @@
-# Jádro
-onnxruntime-gpu==1.22.0   # NE 1.24.1 (nekompatibilní s onnx-asr)
+# Core
+onnxruntime-gpu==1.22.0   # NOT 1.24.1 (incompatible with onnx-asr)
 onnx-asr[hub]
 sounddevice
 keyboard
 pyperclip
 numpy
-pystray          # ikona v liště
-Pillow           # generování ikony
-winsdk           # pozastavení/obnovení médií (System Media Transport Controls)
+pystray          # tray icon
+Pillow           # icon generation
+winsdk           # pause/resume media (System Media Transport Controls)
 
-# CUDA 12 + cuDNN 9 runtime (onnxruntime-gpu je nebundluje); verze 12.9/cuDNN 9.23 podporují Blackwell (sm_120)
+# CUDA 12 + cuDNN 9 runtime (onnxruntime-gpu does not bundle them); 12.9 / cuDNN 9.23 support Blackwell (sm_120)
 nvidia-cudnn-cu12
 nvidia-cublas-cu12
 nvidia-cufft-cu12

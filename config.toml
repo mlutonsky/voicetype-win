@@ -1,37 +1,37 @@
-# Parakeet diktování – konfigurace
-# Po změně je nutné aplikaci restartovat.
+# voicetype-win - configuration
+# Restart the app after changing anything here.
 
-# Klávesová zkratka pro toggle (zapnout/vypnout nahrávání).
-# Příklady: "alt+.", "ctrl+alt+space", "win+alt+d"
+# Toggle hotkey (start/stop recording).
+# Examples: "alt+.", "ctrl+alt+space", "win+alt+d"
 hotkey = "alt+."
 
-# Model (ponech, pokud nevíš). Multijazyčný, umí česky.
+# ASR model (keep as is if unsure). Multilingual; see README for switching models.
 model = "nemo-parakeet-tdt-0.6b-v3"
 
-# Výpočetní zařízení: "auto" (GPU, fallback CPU) | "gpu" | "cpu"
+# Compute device: "auto" (GPU, CPU fallback) | "gpu" | "cpu"
 device = "auto"
 
-# Jazyk přepisu: "auto" (detekce) nebo kód jako "cs", "en", "de", ...
+# Transcription language: "auto" (detect) or a code like "cs", "en", "de", ...
 language = "auto"
 
-# Jazyk textů aplikace (tray, log): "auto" (dle Windows), "en" nebo "cs".
+# App UI language (tray, logs): "auto" (follow Windows), "en" or "cs".
 ui_language = "auto"
 
-# Interpunkce a velká písmena (doporučeno true pro diktování).
+# Punctuation and capitalization (recommended true for dictation).
 punctuation = true
 
-# Přidat mezeru za vložený text (oddělí navazující diktování).
+# Append a space after the inserted text (separates consecutive dictations).
 append_space = true
 
-# Zvuková signalizace startu/konce nahrávání.
+# Sound feedback on recording start/stop.
 beep = true
 
-# Vkládání textu: "clipboard" (přes schránku + Ctrl+V, spolehlivé pro diakritiku)
-#                 "type" (simulované psaní znaků)
+# Text insertion: "clipboard" (clipboard + Ctrl+V, robust for accents)
+#                 "type" (simulated key typing)
 paste_method = "clipboard"
 
-# Po vložení obnovit původní obsah schránky (jen pro paste_method = "clipboard").
+# Restore the previous clipboard content after pasting (only for paste_method = "clipboard").
 restore_clipboard = true
 
-# Pozastavit hrající média (YouTube, Spotify, ...) po dobu nahrávání a po konci je obnovit.
+# Pause playing media (YouTube, Spotify, ...) while recording and resume it afterwards.
 pause_media = true

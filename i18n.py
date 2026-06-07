@@ -1,15 +1,15 @@
-"""Lokalizace textů aplikace podle locale systému.
+"""Localize the app's texts according to the system locale.
 
-Výchozí jazyk je angličtina; pokud je Windows v češtině (nebo to vynutí config
-`ui_language = "cs"`), použijí se české texty. Snadno rozšiřitelné o další jazyky.
+The default language is English; if Windows is in Czech (or the config forces
+`ui_language = "cs"`) the Czech texts are used. Easy to extend with more languages.
 """
 import ctypes
 
 _LANG = "en"
 
-# Klíč -> {jazyk: šablona}; šablony podporují str.format(**kwargs)
+# Key -> {lang: template}; templates support str.format(**kwargs)
 _STRINGS = {
-    # --- log / konzole ---
+    # --- log / console ---
     "config": {
         "en": "Config: hotkey={hotkey}, language={language}, punctuation={punctuation}, device={device}",
         "cs": "Konfigurace: zkratka={hotkey}, jazyk={language}, interpunkce={punctuation}, device={device}",
@@ -130,7 +130,7 @@ _STRINGS = {
 
 
 def detect_language() -> str:
-    """Vrátí 'cs' pro českou Windows lokalizaci, jinak 'en'."""
+    """Return 'cs' for a Czech Windows locale, otherwise 'en'."""
     try:
         buf = ctypes.create_unicode_buffer(85)
         if ctypes.windll.kernel32.GetUserDefaultLocaleName(buf, 85) and buf.value:
@@ -140,7 +140,7 @@ def detect_language() -> str:
     except Exception:
         pass
     try:
-        # Fallback: LANGID, primární jazyk 0x05 = čeština
+        # Fallback: LANGID, primary language 0x05 = Czech
         if (ctypes.windll.kernel32.GetUserDefaultUILanguage() & 0x3FF) == 0x05:
             return "cs"
     except Exception:
@@ -149,7 +149,7 @@ def detect_language() -> str:
 
 
 def set_language(ui_language: str = "auto") -> str:
-    """Nastaví jazyk: 'en'/'cs' napevno, cokoli jiného = auto-detekce."""
+    """Set the language: 'en'/'cs' to force it, anything else = auto-detect."""
     global _LANG
     _LANG = ui_language if ui_language in ("en", "cs") else detect_language()
     return _LANG
@@ -168,5 +168,5 @@ def t(key: str, **kwargs) -> str:
         return template
 
 
-# Výchozí: detekuj podle systému už při importu (config to může přepsat přes set_language).
+# Default: detect from the system already at import time (config can override via set_language).
 set_language("auto")

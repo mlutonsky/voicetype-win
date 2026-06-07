@@ -1,5 +1,5 @@
-# Varianta bez NVIDIA GPU (CPU-only). Použij místo requirements.txt a v config.toml nastav device = "cpu".
-onnxruntime           # CPU runtime (NE onnxruntime-gpu)
+# CPU-only variant (no NVIDIA GPU). Use instead of requirements.txt and set device = "cpu" in config.toml.
+onnxruntime           # CPU runtime (NOT onnxruntime-gpu)
 onnx-asr[hub]
 sounddevice
 keyboard

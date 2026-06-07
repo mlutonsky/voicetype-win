@@ -1,5 +1,5 @@
-' Tichý launcher – spustí dictate.py přes pythonw bez okna konzole.
-' Cesta se odvozuje od umístění tohoto skriptu (funguje kdekoli).
+' Silent launcher - starts dictate.py via pythonw without a console window.
+' The path is derived from this script's location (works anywhere).
 Set fso = CreateObject("Scripting.FileSystemObject")
 Set sh = CreateObject("WScript.Shell")
 base = fso.GetParentFolderName(WScript.ScriptFullName)

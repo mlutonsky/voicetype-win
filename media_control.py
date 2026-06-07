@@ -1,8 +1,8 @@
-"""Pozastavení a obnovení přehrávané medií přes Windows System Media Transport Controls.
+"""Pause and resume playing media via Windows System Media Transport Controls.
 
-Funguje s přehrávači integrovanými do SMTC: YouTube/média v prohlížeči (Chrome, Edge),
-Spotify, Groove, VLC (s pluginem) ad. Pozastaví POUZE to, co zrovna hraje, a obnoví
-přesně tytéž přehrávače – nepouští naslepo nic jiného.
+Works with players integrated into SMTC: YouTube/media in the browser (Chrome,
+Edge), Spotify, Groove, VLC (with a plugin), etc. Pauses ONLY what is currently
+playing and resumes exactly those players - it never blindly starts anything else.
 """
 import asyncio
 
@@ -48,7 +48,7 @@ async def _resume_async(app_ids: list[str]) -> None:
 
 
 def pause_playing() -> list[str]:
-    """Pozastaví hrající média. Vrací seznam app ID, které byly pozastaveny."""
+    """Pause playing media. Returns the list of app IDs that were paused."""
     if not _AVAILABLE:
         return []
     try:
@@ -58,7 +58,7 @@ def pause_playing() -> list[str]:
 
 
 def resume(app_ids: list[str]) -> None:
-    """Znovu spustí přehrávače z daného seznamu app ID."""
+    """Resume the players from the given list of app IDs."""
     if not _AVAILABLE or not app_ids:
         return
     try:
@@ -73,5 +73,5 @@ if __name__ == "__main__":
         for s in mgr.get_sessions():
             info = s.get_playback_info()
             print(f"- {s.source_app_user_model_id!r}: status={info.playback_status if info else '?'}")
-    print("winsdk dostupné:", _AVAILABLE)
+    print("winsdk available:", _AVAILABLE)
     asyncio.run(_list())
