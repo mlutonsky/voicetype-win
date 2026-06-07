@@ -11,8 +11,11 @@ model = "nemo-parakeet-tdt-0.6b-v3"
 # Výpočetní zařízení: "auto" (GPU, fallback CPU) | "gpu" | "cpu"
 device = "auto"
 
-# Jazyk: "auto" (detekce) nebo kód jako "cs", "en", "de", ...
+# Jazyk přepisu: "auto" (detekce) nebo kód jako "cs", "en", "de", ...
 language = "auto"
+
+# Jazyk textů aplikace (tray, log): "auto" (dle Windows), "en" nebo "cs".
+ui_language = "auto"
 
 # Interpunkce a velká písmena (doporučeno true pro diktování).
 punctuation = true

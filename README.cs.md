@@ -6,6 +6,8 @@ Postaveno na [onnx-asr](https://github.com/istupakov/onnx-asr) s **přepínateln
 
 > 🇬🇧 English version: [README.md](README.md)
 
+> 🤖 **Generováno AI:** Veškerý kód v tomto repozitáři byl vygenerován pomocí AI (Anthropic Claude přes Claude Code). Před použitím doporučujeme kontrolu.
+
 ## Co to umí
 
 - 🎙️ **Diktování na přepínač** globální zkratkou (výchozí `Alt + .`)
@@ -37,7 +39,7 @@ powershell -ExecutionPolicy Bypass -File install.ps1
 - Nemáš Python? `winget install Python.Python.3.11`
 - **Bez GPU (CPU):** `powershell -ExecutionPolicy Bypass -File install.ps1 -Cpu` (a v `config.toml` nastav `device = "cpu"`)
 
-Model (~1 GB) se stáhne automaticky z Hugging Face při prvním spuštění.
+`install.ps1` nainstaluje **všechny** Python závislosti z `requirements.txt` automaticky — včetně CUDA 12 / cuDNN 9 runtime. Jediné ruční prerekvizity jsou **Python 3.11** a (pro GPU) **ovladač NVIDIA**. Model (~1 GB) se stáhne automaticky z Hugging Face při prvním spuštění.
 
 Ověření GPU + modelu:
 
@@ -89,7 +91,8 @@ Po úpravě aplikaci restartuj.
 | `hotkey` | Zkratka pro toggle, např. `"alt+."`, `"ctrl+alt+space"`, `"win+alt+d"` |
 | `model` | ASR model — viz *Přepnutí modelu* níže |
 | `device` | `"auto"` (GPU, fallback CPU) / `"gpu"` / `"cpu"` |
-| `language` | `"auto"` nebo kód (`"cs"`, `"en"`, `"de"`, …) |
+| `language` | jazyk přepisu — `"auto"` nebo kód (`"cs"`, `"en"`, `"de"`, …) |
+| `ui_language` | jazyk aplikace/tray/logu — `"auto"` (dle Windows), `"en"` nebo `"cs"` |
 | `punctuation` | `true` = interpunkce a velká písmena |
 | `append_space` | `true` = přidá mezeru za vložený text |
 | `beep` | zvuková signalizace start/stop |
