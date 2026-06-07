@@ -30,16 +30,26 @@ CUDA Toolkit instalovat **netřeba** — potřebný CUDA 12 / cuDNN 9 runtime se
 
 ## Instalace
 
+1. **Stáhni kód** — naklonuj, nebo z GitHubu stáhni ZIP (zelené tlačítko **Code** → *Download ZIP*) a rozbal:
+   ```
+   git clone https://github.com/mlutonsky/voicetype-win.git
+   ```
+2. Měj nainstalovaný **Python 3.11** (`winget install Python.Python.3.11`).
+3. **Dvojklik na `install.cmd`** ve složce. Hotovo.
+
+To je vše — `install.cmd` vytvoří virtuální prostředí a nainstaluje **všechny** závislosti z `requirements.txt` automaticky (včetně CUDA 12 / cuDNN 9 runtime). GPU se autodetekuje; na stroji bez NVIDIA GPU se nainstaluje CPU verze. Model (~1 GB) se stáhne automaticky z Hugging Face při prvním spuštění.
+
+<details>
+<summary>Radši terminál? / Proč to spouští PowerShell?</summary>
+
+`install.cmd` je jen pohodlná obálka kolem `install.ps1`. Z terminálu jde spustit totéž přímo:
+
 ```powershell
-git clone https://github.com/mlutonsky/voicetype-win.git
-cd voicetype-win
-powershell -ExecutionPolicy Bypass -File install.ps1
+powershell -ExecutionPolicy Bypass -File install.ps1   # -Cpu vynutí CPU verzi
 ```
 
-- Nemáš Python? `winget install Python.Python.3.11`
-- **Bez GPU (CPU):** `powershell -ExecutionPolicy Bypass -File install.ps1 -Cpu` (a v `config.toml` nastav `device = "cpu"`)
-
-`install.ps1` nainstaluje **všechny** Python závislosti z `requirements.txt` automaticky — včetně CUDA 12 / cuDNN 9 runtime. Jediné ruční prerekvizity jsou **Python 3.11** a (pro GPU) **ovladač NVIDIA**. Model (~1 GB) se stáhne automaticky z Hugging Face při prvním spuštění.
+`-ExecutionPolicy Bypass` vypadá hrozivě, ale není: Windows ve výchozím stavu blokuje spouštění nepodepsaných lokálních `.ps1` skriptů a tento přepínač to obejde **jen pro toto jedno spuštění** — **nemění** žádné systémové nastavení. `install.cmd` to za tebe udělá, abys to nemusel psát. Skripty `install.ps1` i `install-autostart.ps1` jsou krátké a čitelné, klidně si je předem projdi.
+</details>
 
 Ověření GPU + modelu:
 
@@ -76,9 +86,7 @@ Ikona se objeví v oznamovací oblasti (možná pod šipkou **^** — dá se př
 
 ### Autostart po přihlášení
 
-```powershell
-powershell -ExecutionPolicy Bypass -File install-autostart.ps1
-```
+**Dvojklik na `install-autostart.cmd`** (nebo `powershell -ExecutionPolicy Bypass -File install-autostart.ps1`).
 
 Vypnutí: smaž zástupce ve `shell:startup` (Win+R → `shell:startup`).
 

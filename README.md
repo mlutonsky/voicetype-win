@@ -30,16 +30,26 @@ You do **not** need to install the CUDA Toolkit — the required CUDA 12 / cuDNN
 
 ## Installation
 
+1. **Get the code** — clone it, or download the ZIP from GitHub (green **Code** button → *Download ZIP*) and extract it:
+   ```
+   git clone https://github.com/mlutonsky/voicetype-win.git
+   ```
+2. Make sure **Python 3.11** is installed (`winget install Python.Python.3.11`).
+3. **Double-click `install.cmd`** in the folder. Done.
+
+That's all — `install.cmd` creates the virtual environment and installs **all** dependencies from `requirements.txt` automatically (incl. the CUDA 12 / cuDNN 9 runtime). The GPU is auto-detected; on a machine without an NVIDIA GPU it installs the CPU build instead. The ASR model (~1 GB) downloads automatically from Hugging Face on first run.
+
+<details>
+<summary>Prefer the terminal? / Why does it run PowerShell?</summary>
+
+`install.cmd` is just a convenience wrapper around `install.ps1`. From a terminal you can run the same thing directly:
+
 ```powershell
-git clone https://github.com/mlutonsky/voicetype-win.git
-cd voicetype-win
-powershell -ExecutionPolicy Bypass -File install.ps1
+powershell -ExecutionPolicy Bypass -File install.ps1   # add -Cpu to force the CPU build
 ```
 
-- No Python yet? `winget install Python.Python.3.11`
-- **CPU-only** machine: `powershell -ExecutionPolicy Bypass -File install.ps1 -Cpu` (then set `device = "cpu"` in `config.toml`)
-
-`install.ps1` installs **all** Python dependencies from `requirements.txt` automatically — including the CUDA 12 / cuDNN 9 runtime. The only manual prerequisites are **Python 3.11** and (for GPU) an **NVIDIA driver**. The ASR model (~1 GB) downloads automatically from Hugging Face on first run.
+`-ExecutionPolicy Bypass` looks scary but isn't: by default Windows blocks running unsigned local `.ps1` scripts, and this flag lifts that **only for this single command** — it does **not** change any system-wide setting. `install.cmd` simply does this for you so you don't have to type it. Both `install.ps1` and `install-autostart.ps1` are short, plain-text scripts you can read first.
+</details>
 
 Verify GPU + model:
 
@@ -76,9 +86,7 @@ An icon appears in the notification area (it may be under the **^** overflow —
 
 ### Autostart at login
 
-```powershell
-powershell -ExecutionPolicy Bypass -File install-autostart.ps1
-```
+**Double-click `install-autostart.cmd`** (or run `powershell -ExecutionPolicy Bypass -File install-autostart.ps1`).
 
 Disable by deleting the shortcut in `shell:startup` (Win+R → `shell:startup`).
 
