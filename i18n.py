@@ -68,12 +68,19 @@ _STRINGS = {
     "audio_status": {"en": "audio status: {status}", "cs": "audio status: {status}"},
     "stream_error": {"en": "Audio stream error: {err}", "cs": "Chyba audio streamu: {err}"},
     "quitting": {"en": "Quitting ...", "cs": "Ukončuji aplikaci ..."},
+    "model_switched": {"en": "Switching model to {model} ...", "cs": "Přepínám model na {model} ..."},
+    "cant_switch": {
+        "en": "Can't switch the model while recording/transcribing.",
+        "cs": "Nelze přepnout model během nahrávání/přepisu.",
+    },
+    "persist_error": {"en": "Could not save config: {err}", "cs": "Nepodařilo se uložit config: {err}"},
     # --- tray menu ---
     "menu_pause": {"en": "Pause dictation", "cs": "Pozastavit diktování"},
     "menu_resume": {"en": "Resume dictation", "cs": "Obnovit diktování"},
     "menu_unload": {"en": "Unload model from memory (GPU)", "cs": "Uvolnit model z paměti (GPU)"},
     "menu_load": {"en": "Load model into memory", "cs": "Načíst model do paměti"},
     "menu_quit": {"en": "Quit", "cs": "Ukončit"},
+    "menu_model": {"en": "Model", "cs": "Model"},
     # --- tray status ---
     "st_recording": {"en": "recording", "cs": "nahrává"},
     "st_paused": {"en": "paused", "cs": "pozastaveno"},

@@ -103,6 +103,8 @@ Restart the app after editing.
 | `device` | `"auto"` (GPU, CPU fallback) / `"gpu"` / `"cpu"` |
 | `language` | transcription language — `"auto"` or a code like `"cs"`, `"en"`, `"de"`, … |
 | `ui_language` | app/tray/log language — `"auto"` (follow Windows), `"en"` or `"cs"` |
+| `target_language` | output language for models that require one (e.g. Canary); Canary *translates* to it if it differs from what you speak. Ignored by Parakeet |
+| `models` | the models offered in the tray **Model** submenu |
 | `punctuation` | `true` = punctuation and capitalization |
 | `append_space` | `true` = append a space after the inserted text |
 | `beep` | start/stop sound feedback |
@@ -111,7 +113,12 @@ Restart the app after editing.
 
 ### Switching the model
 
-Set `model` in `config.toml` to any model supported by onnx-asr, e.g.:
+Pick a model live from the tray **Model** submenu — the choice is saved back to
+`config.toml` and persists across restarts. Only one model is held in memory at a
+time (switching unloads the previous one); switching is blocked while recording.
+Edit the `models` list in `config.toml` to change which models appear there.
+
+Or set `model` in `config.toml` directly to any model supported by onnx-asr, e.g.:
 
 | `model` | Notes |
 |---|---|

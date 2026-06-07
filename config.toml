@@ -5,8 +5,12 @@
 # Examples: "alt+.", "ctrl+alt+space", "win+alt+d"
 hotkey = "alt+."
 
-# ASR model (keep as is if unsure). Multilingual; see README for switching models.
+# Active ASR model. Also switchable from the tray "Model" submenu, which writes
+# your choice back to this line. Multilingual; see README for the model list.
 model = "nemo-parakeet-tdt-0.6b-v3"
+
+# Models offered in the tray "Model" submenu.
+models = ["nemo-parakeet-tdt-0.6b-v3", "nemo-canary-1b-v2"]
 
 # Compute device: "auto" (GPU, CPU fallback) | "gpu" | "cpu"
 device = "auto"
@@ -16,6 +20,11 @@ language = "auto"
 
 # App UI language (tray, logs): "auto" (follow Windows), "en" or "cs".
 ui_language = "auto"
+
+# Output language for models that require one (e.g. Canary). Input is still
+# auto-detected; note Canary will TRANSLATE to this language if it differs from
+# what you speak. Ignored by models that don't use it (e.g. Parakeet).
+target_language = "cs"
 
 # Punctuation and capitalization (recommended true for dictation).
 punctuation = true

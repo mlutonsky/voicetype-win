@@ -25,6 +25,7 @@ import pystray
 import sounddevice as sd
 from PIL import Image, ImageDraw
 
+import config_utils
 import i18n
 import media_control
 import ort_utils
@@ -87,8 +88,10 @@ def load_config() -> dict:
     cfg = {
         "hotkey": "alt+.",
         "model": "nemo-parakeet-tdt-0.6b-v3",
+        "models": ["nemo-parakeet-tdt-0.6b-v3", "nemo-canary-1b-v2"],
         "device": "auto",
         "language": "auto",
+        "target_language": "cs",
         "ui_language": "auto",
         "punctuation": True,
         "append_space": True,
@@ -194,6 +197,10 @@ class Dictator:
         lang = self.cfg.get("language", "auto")
         if lang and lang != "auto":
             kwargs["language"] = lang
+        # Output language: required by some models (Canary), ignored by others (Parakeet)
+        target = self.cfg.get("target_language")
+        if target:
+            kwargs["target_language"] = target
         kwargs["pnc"] = bool(self.cfg.get("punctuation", True))
         result = self.model.recognize(audio, sample_rate=self.samplerate, **kwargs)
         if isinstance(result, list):
@@ -360,6 +367,31 @@ class Dictator:
         log(i18n.t("dictation_on") if value else i18n.t("dictation_off"))
         self.notify()
 
+    def _persist_model(self, name: str) -> None:
+        path = BASE / "config.toml"
+        try:
+            path.write_text(
+                config_utils.set_model_in_toml(path.read_text(encoding="utf-8"), name),
+                encoding="utf-8",
+            )
+        except Exception as e:
+            log(i18n.t("persist_error", err=e))
+
+    def set_model(self, name: str) -> None:
+        """Switch the active ASR model (unload old, load new) and remember the choice."""
+        if name == self.cfg.get("model"):
+            return
+        with self.lock:
+            if self.recording or self.busy:
+                log(i18n.t("cant_switch"))
+                return
+        log(i18n.t("model_switched", model=name))
+        self.unload_model()
+        self.cfg["model"] = name
+        self._persist_model(name)
+        self.notify()
+        self.load_model()
+
 
 # ---- system tray icon ----
 # Single source of truth for tray state -> (icon color, i18n status-label key).
@@ -419,9 +451,30 @@ class Tray:
                 lambda i: i18n.t("menu_unload") if self.d.loaded else i18n.t("menu_load"),
                 self._on_unload_toggle,
             ),
+            pystray.MenuItem(lambda i: i18n.t("menu_model"), self._model_menu()),
             pystray.Menu.SEPARATOR,
             pystray.MenuItem(lambda i: i18n.t("menu_quit"), self._on_quit),
         )
+
+    def _model_menu(self) -> pystray.Menu:
+        items = []
+        for name in self.cfg.get("models", []):
+            items.append(pystray.MenuItem(
+                name.replace("nemo-", ""),
+                self._make_model_setter(name),
+                checked=self._make_model_checker(name),
+                radio=True,
+            ))
+        return pystray.Menu(*items)
+
+    def _make_model_setter(self, name: str):
+        # Switch on a worker thread so the click returns immediately (load can take seconds)
+        def cb(icon, item):
+            threading.Thread(target=lambda: self.d.set_model(name), daemon=True).start()
+        return cb
+
+    def _make_model_checker(self, name: str):
+        return lambda item: self.d.cfg.get("model") == name
 
     def _status_text(self, item) -> str:
         d = self.d

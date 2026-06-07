@@ -103,6 +103,8 @@ Po úpravě aplikaci restartuj.
 | `device` | `"auto"` (GPU, fallback CPU) / `"gpu"` / `"cpu"` |
 | `language` | jazyk přepisu — `"auto"` nebo kód (`"cs"`, `"en"`, `"de"`, …) |
 | `ui_language` | jazyk aplikace/tray/logu — `"auto"` (dle Windows), `"en"` nebo `"cs"` |
+| `target_language` | výstupní jazyk pro modely, co ho vyžadují (např. Canary); Canary do něj *překládá*, pokud se liší od mluveného. Parakeet ho ignoruje |
+| `models` | modely nabízené v tray submenu **Model** |
 | `punctuation` | `true` = interpunkce a velká písmena |
 | `append_space` | `true` = přidá mezeru za vložený text |
 | `beep` | zvuková signalizace start/stop |
@@ -111,7 +113,12 @@ Po úpravě aplikaci restartuj.
 
 ### Přepnutí modelu
 
-V `config.toml` nastav `model` na cokoli, co onnx-asr podporuje, např.:
+Model lze přepnout za běhu přes tray submenu **Model** — volba se uloží zpět do
+`config.toml` a zůstane i po restartu. V paměti je vždy jen jeden model (přepnutí
+předchozí uvolní); během nahrávání je přepnutí zablokované. Které modely se v menu
+nabízí, určuje seznam `models` v `config.toml`.
+
+Nebo nastav `model` v `config.toml` přímo na cokoli, co onnx-asr podporuje, např.:
 
 | `model` | Poznámka |
 |---|---|
