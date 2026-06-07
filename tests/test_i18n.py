@@ -7,7 +7,7 @@ SAMPLE = dict(
     model="some-model", providers=["CPUExecutionProvider"], dev="GPU (CUDA)",
     secs=1.0, ms=42.0, text="hello", err="boom", apps=["Chrome"], status="x",
     st="ready", result="r", n=32000, rms=0.0061, verdict="ok", ok=True,
-    back="clip", busy=False, captured=["hi"],
+    back="clip", busy=False, captured=["hi"], free=1500, need=5000,
 )
 
 

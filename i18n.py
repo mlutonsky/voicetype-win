@@ -74,6 +74,18 @@ _STRINGS = {
         "cs": "Nelze přepnout model během nahrávání/přepisu.",
     },
     "persist_error": {"en": "Could not save config: {err}", "cs": "Nepodařilo se uložit config: {err}"},
+    "low_vram": {
+        "en": "Low GPU memory: ~{free} MB free, ~{need} MB likely needed. It may spill to RAM (slow) or fail.",
+        "cs": "Málo paměti GPU: ~{free} MB volných, potřeba ~{need} MB. Může to přetéct do RAM (pomalé) nebo selhat.",
+    },
+    "oom_error": {
+        "en": "Not enough GPU memory to load {model}. Try a smaller model, or set device = \"cpu\" in config.toml.",
+        "cs": "Nedostatek paměti GPU pro načtení {model}. Zkus menší model, nebo nastav device = \"cpu\" v config.toml.",
+    },
+    "model_load_error": {
+        "en": "Failed to load model {model}: {err}",
+        "cs": "Načtení modelu {model} selhalo: {err}",
+    },
     # --- tray menu ---
     "menu_pause": {"en": "Pause dictation", "cs": "Pozastavit diktování"},
     "menu_resume": {"en": "Resume dictation", "cs": "Obnovit diktování"},

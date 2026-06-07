@@ -11,6 +11,7 @@ Silent background:    run start-dictation.vbs
 """
 import gc
 import os
+import subprocess
 import sys
 import threading
 import time
@@ -119,6 +120,35 @@ def _is_pressed(key: str) -> bool:
         return False
 
 
+def _free_vram_mb():
+    """Free GPU memory in MB via nvidia-smi, or None if unavailable."""
+    try:
+        out = subprocess.run(
+            ["nvidia-smi", "--query-gpu=memory.free", "--format=csv,noheader,nounits"],
+            capture_output=True, text=True, timeout=5,
+        ).stdout.strip().splitlines()
+        return int(out[0]) if out else None
+    except Exception:
+        return None
+
+
+def _estimate_model_vram_mb(name: str) -> int:
+    """Rough VRAM estimate (MB) used only for a pre-load low-memory warning."""
+    n = name.lower()
+    if "canary" in n or "1b" in n:
+        return 5000
+    if "parakeet" in n or "0.6b" in n:
+        return 3500
+    return 4000
+
+
+def _looks_like_oom(e: Exception) -> bool:
+    s = str(e).lower()
+    return any(k in s for k in (
+        "out of memory", "cuda_error_out_of_memory", "cudamalloc", "failed to allocate",
+    ))
+
+
 class Dictator:
     def __init__(self, cfg: dict):
         self.cfg = cfg
@@ -153,6 +183,14 @@ class Dictator:
             return ["CPUExecutionProvider"]
         return ["CUDAExecutionProvider", "CPUExecutionProvider"]
 
+    def _warn_if_low_vram(self) -> None:
+        free = _free_vram_mb()
+        if free is None:
+            return
+        need = _estimate_model_vram_mb(self.cfg["model"])
+        if free < need:
+            log(i18n.t("low_vram", free=free, need=need))
+
     def load_model(self) -> None:
         with self._model_lock:
             if self.loaded:
@@ -160,21 +198,33 @@ class Dictator:
             import onnx_asr
             if self.cfg["device"] != "cpu":
                 init_cuda()
+                self._warn_if_low_vram()
             provs = self.providers()
             log(i18n.t("loading_model", model=self.cfg["model"], providers=provs))
-            self.model = onnx_asr.load_model(self.cfg["model"], providers=provs)
+            try:
+                self.model = onnx_asr.load_model(self.cfg["model"], providers=provs)
 
-            # Detect the provider actually used (shared helper)
-            used = ort_utils.session_providers(self.model)
-            self.on_gpu = any("CUDA" in p for p in used)
-            log(i18n.t("running_on", dev="GPU (CUDA)" if self.on_gpu else "CPU", providers=used))
+                # Detect the provider actually used (shared helper)
+                used = ort_utils.session_providers(self.model)
+                self.on_gpu = any("CUDA" in p for p in used)
+                log(i18n.t("running_on", dev="GPU (CUDA)" if self.on_gpu else "CPU", providers=used))
 
-            # Warmup – the first inference compiles kernels (otherwise the first dictation is slow)
-            log(i18n.t("warming_up"))
-            warm = (0.01 * np.random.default_rng(0).standard_normal(self.samplerate)).astype("float32")
-            t = time.perf_counter()
-            self.transcribe(warm)
-            log(i18n.t("model_ready", secs=time.perf_counter() - t))
+                # Warmup – the first inference compiles kernels (otherwise the first dictation is slow)
+                log(i18n.t("warming_up"))
+                warm = (0.01 * np.random.default_rng(0).standard_normal(self.samplerate)).astype("float32")
+                t = time.perf_counter()
+                self.transcribe(warm)
+                log(i18n.t("model_ready", secs=time.perf_counter() - t))
+            except Exception as e:
+                # Don't crash on out-of-memory (or any load failure): stay unloaded and report
+                self.model = None
+                gc.collect()
+                if _looks_like_oom(e):
+                    log(i18n.t("oom_error", model=self.cfg["model"]))
+                else:
+                    log(i18n.t("model_load_error", model=self.cfg["model"], err=e))
+                self.notify()
+                return
         self.notify()
 
     def unload_model(self) -> None:
@@ -275,6 +325,8 @@ class Dictator:
             if not self.loaded:
                 log(i18n.t("reloading"))
                 self.load_model()
+                if not self.loaded:
+                    return  # load failed (e.g. out of memory) - already reported
             t = time.perf_counter()
             text = self.transcribe(audio)
             dt = time.perf_counter() - t

@@ -133,6 +133,7 @@ Set `language` to match (or keep `"auto"`). See the [onnx-asr model list](https:
 
 - **Hotkey doesn't respond:** the global keyboard hook may need elevated rights when a foreground app runs as administrator — start `start-dictation.vbs` / the console **as administrator**.
 - **Running on CPU instead of GPU:** check the `Running on:` line in the `smoke_test.py` output or `dictate.log`. GPU needs the `nvidia-*-cu12` packages from `requirements.txt`.
+- **Out of GPU memory:** if a model doesn't fit in VRAM, the app logs a clear message and stays unloaded — it does **not** crash. Pick a smaller model from the tray **Model** submenu, or set `device = "cpu"`. (On Windows the NVIDIA driver may instead spill into shared memory/RAM and run very slowly; you can disable that in NVIDIA Control Panel.)
 - **Wrong microphone:** the default Windows input device is used — change it in *Settings → System → Sound → Input*.
 - **Paste fails in a specific app:** set `paste_method = "type"` in `config.toml`.
 - **Long recordings:** the model is tuned for shorter segments (up to ~30 s); for continuous long dictation, toggle per sentence/paragraph.

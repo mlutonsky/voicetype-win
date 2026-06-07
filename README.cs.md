@@ -133,6 +133,7 @@ Nastav `language` odpovídajícím způsobem (nebo nech `"auto"`). Kompletní se
 
 - **Zkratka nereaguje:** globální odchyt kláves může vyžadovat běh **jako správce** (když má fokus aplikace běžící jako správce) — spusť `start-dictation.vbs` / konzoli jako správce.
 - **Běží na CPU místo GPU:** zkontroluj výstup `smoke_test.py` / řádek `Běží na` v `dictate.log`. GPU vyžaduje balíčky `nvidia-*-cu12` z `requirements.txt`.
+- **Nedostatek paměti GPU:** když se model nevejde do VRAM, aplikace zaloguje srozumitelnou hlášku a zůstane bez načteného modelu — **nespadne**. Vyber menší model v tray submenu **Model**, nebo nastav `device = "cpu"`. (Na Windows může ovladač NVIDIA místo toho přetéct do sdílené paměti/RAM a běžet velmi pomalu; jde to vypnout v NVIDIA Control Panel.)
 - **Špatný mikrofon:** používá se výchozí vstup Windows — změň v *Nastavení → Systém → Zvuk → Vstup*.
 - **Vkládání nefunguje v konkrétní aplikaci:** nastav `paste_method = "type"`.
 - **Dlouhé nahrávky:** model je laděný na kratší úseky (do ~30 s); pro souvislé diktování přepínej po větách/odstavcích.
