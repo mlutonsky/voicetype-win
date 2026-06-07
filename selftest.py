@@ -1,42 +1,46 @@
-"""Automatický self-test (bez nutnosti mluvit): mikrofon, přepis, schránka, toggle."""
+"""Automatic self-test (no speaking needed): microphone, transcription, clipboard,
+toggle chain. Messages follow the system locale (see i18n.py)."""
 import time
 import numpy as np
 import pyperclip
 
 from dictate import Dictator, load_config
+import i18n
 
-CZ = "Příliš žluťoučký kůň úpěl ďábelské ódy."
+PANGRAM = "Příliš žluťoučký kůň úpěl ďábelské ódy."  # accents round-trip check
 
 cfg = load_config()
+i18n.set_language(cfg.get("ui_language", "auto"))
 d = Dictator(cfg)
 d.load_model()
 
-print("\n=== A) Zachycení zvuku z mikrofonu (2 s) ===")
+print("\n" + i18n.t("sf_a"))
 import sounddevice as sd
 rec = sd.rec(int(2 * 16000), samplerate=16000, channels=1, dtype="float32")
 sd.wait()
 audio = rec[:, 0]
 rms = float(np.sqrt(np.mean(audio**2)))
-print(f"Vzorků: {len(audio)}, RMS: {rms:.5f}  -> {'mikrofon zachytává' if rms > 1e-5 else 'TICHO / mikrofon?'}")
+verdict = i18n.t("sf_mic_ok") if rms > 1e-5 else i18n.t("sf_mic_silent")
+print(i18n.t("sf_a_res", n=len(audio), rms=rms, verdict=verdict))
 
-print("\n=== B) Přepis zachyceného audia (jen test, že nespadne) ===")
+print("\n" + i18n.t("sf_b"))
 t = time.perf_counter()
 text = d.transcribe(audio)
-print(f"({(time.perf_counter()-t)*1000:.0f} ms) výsledek: {text!r}")
+print(i18n.t("sf_b_res", ms=(time.perf_counter() - t) * 1000, text=text))
 
-print("\n=== C) Schránka – unicode round-trip (česká diakritika) ===")
+print("\n" + i18n.t("sf_c"))
 before = pyperclip.paste()
-pyperclip.copy(CZ)
+pyperclip.copy(PANGRAM)
 back = pyperclip.paste()
-print(f"OK: {back == CZ}  ({back!r})")
+print(i18n.t("sf_c_res", ok=(back == PANGRAM), back=back))
 pyperclip.copy(before if before is not None else "")
 
-print("\n=== D) Toggle řetězec (record→stop→přepis→vložení), vložení odchyceno ===")
+print("\n" + i18n.t("sf_d"))
 captured = []
-d.insert_text = lambda s: captured.append(s)  # neposíláme Ctrl+V do terminálu
+d.insert_text = lambda s: captured.append(s)  # don't send Ctrl+V into the terminal
 d.toggle()              # start
 time.sleep(1.5)
-d.toggle()              # stop -> spustí přepis ve vlákně
-time.sleep(3.0)         # počkej na dokončení přepisu
-print(f"busy={d.busy}, vloženo by se: {captured!r}")
-print("\nHotovo. Pro test s řečí spusť dictate.py a mluv.")
+d.toggle()              # stop -> runs transcription in a thread
+time.sleep(3.0)         # wait for it to finish
+print(i18n.t("sf_d_res", busy=d.busy, captured=captured))
+print("\n" + i18n.t("sf_done"))

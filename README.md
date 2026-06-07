@@ -123,12 +123,12 @@ Set `language` to match (or keep `"auto"`). See the [onnx-asr model list](https:
 ## Troubleshooting
 
 - **Hotkey doesn't respond:** the global keyboard hook may need elevated rights when a foreground app runs as administrator — start `start-dictation.vbs` / the console **as administrator**.
-- **Running on CPU instead of GPU:** check the `smoke_test.py` output / `dictate.log` line `Běží na` (*Running on*). GPU needs the `nvidia-*-cu12` packages from `requirements.txt`.
+- **Running on CPU instead of GPU:** check the `Running on:` line in the `smoke_test.py` output or `dictate.log`. GPU needs the `nvidia-*-cu12` packages from `requirements.txt`.
 - **Wrong microphone:** the default Windows input device is used — change it in *Settings → System → Sound → Input*.
 - **Paste fails in a specific app:** set `paste_method = "type"` in `config.toml`.
 - **Long recordings:** the model is tuned for shorter segments (up to ~30 s); for continuous long dictation, toggle per sentence/paragraph.
 
-> Note: runtime/console messages are in Czech.
+> Runtime messages (logs, tray, diagnostics) follow your **system locale** — English by default, Czech on a Czech Windows. Override with `ui_language` in `config.toml`.
 
 ## How it works
 

@@ -1,45 +1,58 @@
-"""Diagnostika: ověří GPU (CUDA), stáhne model (dle config.toml) a změří latenci přepisu.
+"""Diagnostics: verify the GPU (CUDA), download the model (from config.toml) and
+measure transcription latency. Messages follow the system locale (see i18n.py).
 
-Spuštění:
+Run:
     .venv\\Scripts\\python.exe smoke_test.py
 """
+import sys
 import time
 import tomllib
 from pathlib import Path
 import numpy as np
 from cuda_init import init_cuda
+import i18n
+
+# The Windows console is often cp1250 – switch output to UTF-8 to be safe
+for _s in (sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
 
 _cfg_path = Path(__file__).resolve().parent / "config.toml"
 MODEL = "nemo-parakeet-tdt-0.6b-v3"
+_ui = "auto"
 if _cfg_path.is_file():
     with open(_cfg_path, "rb") as _f:
-        MODEL = tomllib.load(_f).get("model", MODEL)
+        _cfg = tomllib.load(_f)
+        MODEL = _cfg.get("model", MODEL)
+        _ui = _cfg.get("ui_language", "auto")
+i18n.set_language(_ui)
 
-# Zpřístupni CUDA/cuDNN DLL (musí proběhnout před importem session)
+# Expose CUDA/cuDNN DLLs (must happen before creating a session)
 print("init_cuda():", init_cuda())
 
 import onnxruntime as ort
 
 print(f"onnxruntime {ort.__version__}")
-print("Dostupní provideři:", ort.get_available_providers())
+print(i18n.t("sm_providers", providers=ort.get_available_providers()))
 
 import onnx_asr
 
 PROVIDERS = ["CUDAExecutionProvider", "CPUExecutionProvider"]
 
-print(f"\nNačítám model {MODEL} (poprvé se stáhne, ~1 GB)...")
+print("\n" + i18n.t("sm_loading", model=MODEL))
 t0 = time.perf_counter()
 model = onnx_asr.load_model(MODEL, providers=PROVIDERS)
-print(f"Model načten za {time.perf_counter() - t0:.1f} s")
+print(i18n.t("sm_loaded_in", secs=time.perf_counter() - t0))
 
-# Zjisti, na čem reálně běží encoder
+# Detect which provider the encoder actually runs on
 used = None
 for attr in vars(model).values():
     sess = getattr(attr, "_session", None) or getattr(attr, "session", None)
     if isinstance(sess, ort.InferenceSession):
         used = sess.get_providers()
         break
-# Hlubší hledání, pokud nahoře nenajdeme session
 if used is None:
     def find_sessions(obj, depth=0, seen=None):
         if seen is None:
@@ -55,17 +68,17 @@ if used is None:
                 found += find_sessions(v, depth + 1, seen)
         return found
     provs = find_sessions(model)
-    used = provs[0] if provs else ["<neznámé>"]
-print("Session provideři:", used)
+    used = provs[0] if provs else ["<unknown>"]
+print(i18n.t("sm_session", providers=used))
 on_gpu = any("CUDA" in p for p in used)
-print(f"==> Běží na: {'GPU (CUDA)' if on_gpu else 'CPU'}")
+print(i18n.t("sm_running_on", dev="GPU (CUDA)" if on_gpu else "CPU"))
 
-# Pipeline test: 2 s ticha při 16 kHz (ověří, že přepis nespadne + latence)
-print("\nTest přepisu (2 s ticha)...")
+# Pipeline test: 2 s of silence at 16 kHz (checks the pipeline doesn't crash + latency)
+print("\n" + i18n.t("sm_test"))
 audio = np.zeros(16000 * 2, dtype=np.float32)
 t0 = time.perf_counter()
 result = model.recognize(audio, sample_rate=16000)
 dt = time.perf_counter() - t0
-print(f"Výsledek: {result!r}")
-print(f"Latence přepisu 2 s audia: {dt*1000:.0f} ms")
-print("\nHotovo. Pokud je výše GPU (CUDA), je vše připraveno.")
+print(i18n.t("sm_result", result=result))
+print(i18n.t("sm_latency", ms=dt * 1000))
+print("\n" + i18n.t("sm_done"))

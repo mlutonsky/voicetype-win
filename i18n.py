@@ -83,6 +83,49 @@ _STRINGS = {
         "en": "voicetype-win – {st} ({dev}) · {hotkey}",
         "cs": "voicetype-win – {st} ({dev}) · {hotkey}",
     },
+    # --- smoke_test.py ---
+    "sm_providers": {"en": "Available providers: {providers}", "cs": "Dostupní provideři: {providers}"},
+    "sm_loading": {
+        "en": "Loading model {model} (downloads ~1 GB on first run) ...",
+        "cs": "Načítám model {model} (poprvé se stáhne ~1 GB) ...",
+    },
+    "sm_loaded_in": {"en": "Model loaded in {secs:.1f} s", "cs": "Model načten za {secs:.1f} s"},
+    "sm_session": {"en": "Session providers: {providers}", "cs": "Session provideři: {providers}"},
+    "sm_running_on": {"en": "==> Running on: {dev}", "cs": "==> Běží na: {dev}"},
+    "sm_test": {
+        "en": "Transcription test (2 s of silence) ...",
+        "cs": "Test přepisu (2 s ticha) ...",
+    },
+    "sm_result": {"en": "Result: {result!r}", "cs": "Výsledek: {result!r}"},
+    "sm_latency": {"en": "Latency for 2 s of audio: {ms:.0f} ms", "cs": "Latence přepisu 2 s audia: {ms:.0f} ms"},
+    "sm_done": {
+        "en": "Done. If it says GPU (CUDA) above, everything is ready.",
+        "cs": "Hotovo. Pokud je výše GPU (CUDA), je vše připraveno.",
+    },
+    # --- selftest.py ---
+    "sf_a": {"en": "=== A) Microphone capture (2 s) ===", "cs": "=== A) Zachycení zvuku z mikrofonu (2 s) ==="},
+    "sf_a_res": {"en": "Samples: {n}, RMS: {rms:.5f}  -> {verdict}", "cs": "Vzorků: {n}, RMS: {rms:.5f}  -> {verdict}"},
+    "sf_mic_ok": {"en": "microphone is capturing", "cs": "mikrofon zachytává"},
+    "sf_mic_silent": {"en": "SILENCE / mic?", "cs": "TICHO / mikrofon?"},
+    "sf_b": {
+        "en": "=== B) Transcribe captured audio (no-crash test) ===",
+        "cs": "=== B) Přepis zachyceného audia (jen test, že nespadne) ===",
+    },
+    "sf_b_res": {"en": "({ms:.0f} ms) result: {text!r}", "cs": "({ms:.0f} ms) výsledek: {text!r}"},
+    "sf_c": {
+        "en": "=== C) Clipboard – Unicode round-trip (accents) ===",
+        "cs": "=== C) Schránka – unicode round-trip (česká diakritika) ===",
+    },
+    "sf_c_res": {"en": "OK: {ok}  ({back!r})", "cs": "OK: {ok}  ({back!r})"},
+    "sf_d": {
+        "en": "=== D) Toggle chain (record->stop->transcribe->insert), insertion captured ===",
+        "cs": "=== D) Toggle řetězec (record→stop→přepis→vložení), vložení odchyceno ===",
+    },
+    "sf_d_res": {"en": "busy={busy}, would insert: {captured!r}", "cs": "busy={busy}, vloženo by se: {captured!r}"},
+    "sf_done": {
+        "en": "Done. For a speech test, run dictate.py and talk.",
+        "cs": "Hotovo. Pro test s řečí spusť dictate.py a mluv.",
+    },
 }
 
 
