@@ -9,6 +9,8 @@ import asyncio
 try:
     from winsdk.windows.media.control import (
         GlobalSystemMediaTransportControlsSessionManager as _Manager,
+    )
+    from winsdk.windows.media.control import (
         GlobalSystemMediaTransportControlsSessionPlaybackStatus as _Status,
     )
     _AVAILABLE = True

@@ -8,9 +8,11 @@ import sys
 import time
 import tomllib
 from pathlib import Path
+
 import numpy as np
-from cuda_init import init_cuda
+
 import i18n
+from cuda_init import init_cuda
 
 # The Windows console is often cp1250 – switch output to UTF-8 to be safe
 for _s in (sys.stdout, sys.stderr):

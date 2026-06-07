@@ -1,0 +1,18 @@
+# Tooling config for voicetype-win (no packaging - this is an app, not a library).
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]  # long lines are fine (e.g. the i18n translation tables)
+
+[tool.ruff.lint.per-file-ignores]
+# smoke_test.py imports onnxruntime/onnx_asr on purpose AFTER init_cuda() so the
+# CUDA/cuDNN DLLs are on the search path first - the late imports are intentional.
+"smoke_test.py" = ["E402"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

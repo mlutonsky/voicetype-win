@@ -1,5 +1,7 @@
 # voicetype-win
 
+[![CI](https://github.com/mlutonsky/voicetype-win/actions/workflows/ci.yml/badge.svg)](https://github.com/mlutonsky/voicetype-win/actions/workflows/ci.yml)
+
 **Local, offline voice dictation for Windows — like Whisper Flow, but it runs entirely on your own machine and GPU.** Press a hotkey, speak, press again, and the transcribed text is typed into whatever app has focus. Nothing is sent to the cloud.
 
 Powered by [onnx-asr](https://github.com/istupakov/onnx-asr) with **switchable models** (NVIDIA Parakeet, Canary, …). The default model is multilingual — 25 European languages including English, German, French, Spanish, Czech, … with automatic language detection.
@@ -136,6 +138,16 @@ Set `language` to match (or keep `"auto"`). See the [onnx-asr model list](https:
 - `cuda_init.py` — exposes the CUDA / cuDNN DLLs from the `nvidia-*-cu12` pip packages (otherwise `onnxruntime` can't find them at runtime).
 - `media_control.py` — pauses/resumes media via Windows System Media Transport Controls (`winsdk`).
 - The model is downloaded from Hugging Face on first run and cached under `~/.cache/huggingface`.
+
+## Development
+
+CI runs on every push/PR (see the badge above): [ruff](https://docs.astral.sh/ruff/) lint + `pytest` on Linux, and an import check on Windows. The tests are lightweight (no GPU/model needed). Run them locally:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python.exe -m ruff check .
+.\.venv\Scripts\python.exe -m pytest -q
+```
 
 ## Credits
 

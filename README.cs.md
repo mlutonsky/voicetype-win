@@ -1,5 +1,7 @@
 # voicetype-win
 
+[![CI](https://github.com/mlutonsky/voicetype-win/actions/workflows/ci.yml/badge.svg)](https://github.com/mlutonsky/voicetype-win/actions/workflows/ci.yml)
+
 **Lokální offline diktování řeči pro Windows — jako Whisper Flow, ale běží celé u tebe na vlastním GPU.** Stiskneš zkratku, mluvíš, stiskneš znovu a přepsaný text se vloží do aktivního okna. Nic se neposílá do cloudu.
 
 Postaveno na [onnx-asr](https://github.com/istupakov/onnx-asr) s **přepínatelnými modely** (NVIDIA Parakeet, Canary, …). Výchozí model je multijazyčný — 25 evropských jazyků včetně češtiny, angličtiny, němčiny, … s automatickou detekcí jazyka.
@@ -134,6 +136,16 @@ Nastav `language` odpovídajícím způsobem (nebo nech `"auto"`). Kompletní se
 - `cuda_init.py` — zpřístupní CUDA/cuDNN DLL z balíčků `nvidia-*-cu12` (jinak je `onnxruntime` za běhu nenajde).
 - `media_control.py` — pozastaví/obnoví média přes Windows System Media Transport Controls (`winsdk`).
 - Model se stáhne z Hugging Face při prvním spuštění do `~/.cache/huggingface`.
+
+## Vývoj
+
+CI běží při každém push/PR (viz badge nahoře): [ruff](https://docs.astral.sh/ruff/) lint + `pytest` na Linuxu a import-check na Windows. Testy jsou lehké (nepotřebují GPU ani model). Lokálně:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python.exe -m ruff check .
+.\.venv\Scripts\python.exe -m pytest -q
+```
 
 ## Poděkování
 

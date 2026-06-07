@@ -1,11 +1,13 @@
 """Automatic self-test (no speaking needed): microphone, transcription, clipboard,
 toggle chain. Messages follow the system locale (see i18n.py)."""
 import time
+
 import numpy as np
 import pyperclip
+import sounddevice as sd
 
-from dictate import Dictator, load_config
 import i18n
+from dictate import Dictator, load_config
 
 PANGRAM = "Příliš žluťoučký kůň úpěl ďábelské ódy."  # accents round-trip check
 
@@ -15,7 +17,6 @@ d = Dictator(cfg)
 d.load_model()
 
 print("\n" + i18n.t("sf_a"))
-import sounddevice as sd
 rec = sd.rec(int(2 * 16000), samplerate=16000, channels=1, dtype="float32")
 sd.wait()
 audio = rec[:, 0]

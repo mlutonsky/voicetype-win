@@ -9,25 +9,25 @@ stop. Speech is transcribed and the text is inserted into the focused window.
 Run with a console:  .venv\\Scripts\\python.exe dictate.py
 Silent background:    run start-dictation.vbs
 """
-import sys
-import os
 import gc
-import time
+import os
+import sys
 import threading
+import time
 import tomllib
 import winsound
 from pathlib import Path
 
-import numpy as np
-import sounddevice as sd
-import pyperclip
 import keyboard
+import numpy as np
+import pyperclip
 import pystray
+import sounddevice as sd
 from PIL import Image, ImageDraw
 
-from cuda_init import init_cuda
-import media_control
 import i18n
+import media_control
+from cuda_init import init_cuda
 
 # The Windows console is often cp1250 – switch output to UTF-8 so we don't crash on ●/■/→/accents
 for _s in (sys.stdout, sys.stderr):

@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-test:
+    name: Lint & tests (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dev tools
+        run: pip install -r requirements-dev.txt
+      - name: Ruff (lint)
+        run: ruff check .
+      - name: Compile all sources
+        run: python -m compileall -q dictate.py cuda_init.py media_control.py i18n.py smoke_test.py selftest.py tests
+      - name: Pytest
+        run: pytest -q
+
+  import-windows:
+    name: Import check (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install lightweight runtime deps (no GPU/onnxruntime/model)
+        run: pip install numpy sounddevice pyperclip keyboard pystray Pillow winsdk
+      - name: Import modules
+        run: python -c "import i18n, cuda_init, media_control, dictate; print('imports OK')"
