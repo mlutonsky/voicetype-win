@@ -97,6 +97,7 @@ class Dictator:
         self.frames: list[np.ndarray] = []
         self.stream: sd.InputStream | None = None
         self.lock = threading.Lock()
+        self._model_lock = threading.Lock()  # serializes load/unload of the model
         self.busy = False            # transcription in progress
         self.model = None
         self.enabled = True          # dictation active (can be paused from the tray)
@@ -123,35 +124,38 @@ class Dictator:
         return ["CUDAExecutionProvider", "CPUExecutionProvider"]
 
     def load_model(self) -> None:
-        if self.loaded:
-            return
-        import onnx_asr
-        if self.cfg["device"] != "cpu":
-            init_cuda()
-        provs = self.providers()
-        log(i18n.t("loading_model", model=self.cfg["model"], providers=provs))
-        self.model = onnx_asr.load_model(self.cfg["model"], providers=provs)
+        with self._model_lock:
+            if self.loaded:
+                return
+            import onnx_asr
+            if self.cfg["device"] != "cpu":
+                init_cuda()
+            provs = self.providers()
+            log(i18n.t("loading_model", model=self.cfg["model"], providers=provs))
+            self.model = onnx_asr.load_model(self.cfg["model"], providers=provs)
 
-        # Detect the provider actually used
-        import onnxruntime as ort
-        used = self._session_providers(ort)
-        self.on_gpu = any("CUDA" in p for p in used)
-        log(i18n.t("running_on", dev="GPU (CUDA)" if self.on_gpu else "CPU", providers=used))
+            # Detect the provider actually used
+            import onnxruntime as ort
+            used = self._session_providers(ort)
+            self.on_gpu = any("CUDA" in p for p in used)
+            log(i18n.t("running_on", dev="GPU (CUDA)" if self.on_gpu else "CPU", providers=used))
 
-        # Warmup – the first inference compiles kernels (otherwise the first dictation is slow)
-        log(i18n.t("warming_up"))
-        warm = (0.01 * np.random.default_rng(0).standard_normal(self.samplerate)).astype("float32")
-        t = time.perf_counter()
-        self.transcribe(warm)
-        log(i18n.t("model_ready", secs=time.perf_counter() - t))
+            # Warmup – the first inference compiles kernels (otherwise the first dictation is slow)
+            log(i18n.t("warming_up"))
+            warm = (0.01 * np.random.default_rng(0).standard_normal(self.samplerate)).astype("float32")
+            t = time.perf_counter()
+            self.transcribe(warm)
+            log(i18n.t("model_ready", secs=time.perf_counter() - t))
         self.notify()
 
     def unload_model(self) -> None:
         """Free the model from memory (returns ~3.4 GB VRAM). Handy before gaming."""
-        with self.lock:
-            if self.recording or self.busy:
-                log(i18n.t("cant_unload"))
-                return
+        # _model_lock first so we can't null the model while a load/warmup is running.
+        with self._model_lock:
+            with self.lock:
+                if self.recording or self.busy:
+                    log(i18n.t("cant_unload"))
+                    return
             if not self.loaded:
                 return
             self.model = None
