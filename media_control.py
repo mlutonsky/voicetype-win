@@ -27,10 +27,13 @@ async def _pause_playing_async() -> list[str]:
     paused: list[str] = []
     for s in mgr.get_sessions():
         try:
+            app_id = s.source_app_user_model_id
+            if not app_id:
+                continue  # no stable id -> we couldn't reliably resume it, so skip
             info = s.get_playback_info()
             if info and info.playback_status == _Status.PLAYING:
                 if await s.try_pause_async():
-                    paused.append(s.source_app_user_model_id or "")
+                    paused.append(app_id)
         except Exception:
             pass
     return paused
@@ -43,7 +46,13 @@ async def _resume_async(app_ids: list[str]) -> None:
     mgr = await _Manager.request_async()
     for s in mgr.get_sessions():
         try:
-            if (s.source_app_user_model_id or "") in wanted:
+            if s.source_app_user_model_id not in wanted:
+                continue
+            info = s.get_playback_info()
+            # Only resume sessions that are still paused -> never "start" media that
+            # was stopped/closed in the meantime. (Sessions sharing an app id can't be
+            # told apart via the public API, so a same-id paused session may also resume.)
+            if info and info.playback_status == _Status.PAUSED:
                 await s.try_play_async()
         except Exception:
             pass
